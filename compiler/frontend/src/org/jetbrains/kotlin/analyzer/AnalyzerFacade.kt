@@ -228,7 +228,7 @@ class ResolverForProjectImpl<M : ModuleInfo>(
         moduleInfoByDescriptor[moduleDescriptor] = module
         setupModuleDescriptor(module, moduleDescriptor)
         val modificationTracker = (module as? TrackableModuleInfo)?.createModificationTracker() ?:
-                                  (if (invalidateOnOOCB) PsiModificationTracker.SERVICE.getInstance(projectContext.project).outOfCodeBlockModificationTracker else null)
+                                  (PsiModificationTracker.SERVICE.getInstance(projectContext.project).outOfCodeBlockModificationTracker.takeIf { invalidateOnOOCB })
         return ModuleData(moduleDescriptor, modificationTracker, modificationTracker?.modificationCount)
     }
 }
