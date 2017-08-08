@@ -91,9 +91,6 @@ class ResolverForProjectImpl<M : ModuleInfo>(
         private val languageSettingsProvider: LanguageSettingsProvider = LanguageSettingsProvider.Default,
         private val invalidateOnOOCB: Boolean = true
 ) : ResolverForProject<M>() {
-    init {
-        println("Creating ResolverForProjectImpl $this ${System.identityHashCode(this)}")
-    }
 
     private class ModuleData(
             val moduleDescriptor: ModuleDescriptorImpl,
@@ -177,35 +174,16 @@ class ResolverForProjectImpl<M : ModuleInfo>(
         if (module in modules) {
             return projectContext.storageManager.compute {
                 var moduleData = descriptorByModule.getOrPut(module) {
-                    createModuleDescriptor(module).apply {
-                        println("Created initial module descriptor for module $module: $moduleDescriptor in ${this@ResolverForProjectImpl} [mod count $modificationCount]")
-                    }
+                    createModuleDescriptor(module)
                 }
                 if (moduleData.isOutOfDate()) {
-                    println("Recreating descriptor for module $module")
                     moduleData = recreateModuleDescriptor(module)
-                    recreateDependentModuleDescriptors(module)
-                }
-                else {
-                    println("Returning existing descriptor ${moduleData.moduleDescriptor} for module $module in ${this@ResolverForProjectImpl}")
                 }
                 moduleData.moduleDescriptor
             }
         }
 
         return delegateResolver.descriptorForModule(module) as ModuleDescriptorImpl
-    }
-
-    private fun recreateDependentModuleDescriptors(baseModule: M) {
-        val modulesToRecreate = descriptorByModule.keys.filter { module ->
-            module != baseModule && baseModule in module.dependencies()
-        }
-        for (module in modulesToRecreate) {
-            val moduleData = descriptorByModule[module]
-            if (moduleData?.isOutOfDate() == true) {
-                recreateModuleDescriptor(module)
-            }
-        }
     }
 
     private fun recreateModuleDescriptor(module: M): ModuleData {
@@ -217,7 +195,6 @@ class ResolverForProjectImpl<M : ModuleInfo>(
         }
 
         val moduleData = createModuleDescriptor(module)
-        println("Recreated module descriptor for $module from $oldDescriptor  to ${moduleData.moduleDescriptor}")
         descriptorByModule[module] = moduleData
         return moduleData
     }
